@@ -1,0 +1,29 @@
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2008
+
+Project("{8E49E0F1-4BB6-5A65-8F2A-FECD87E6E436}") = "EmojiText", "Assembly-CSharp.csproj", "{A91454F8-D9BA-8EB5-5067-093B21B0AE9A}"
+EndProject
+Project("{8E49E0F1-4BB6-5A65-8F2A-FECD87E6E436}") = "EmojiText", "Assembly-CSharp-Editor.csproj", "{C1B4CE8A-14F8-9399-D669-B09E4F5EA1BC}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A91454F8-D9BA-8EB5-5067-093B21B0AE9A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A91454F8-D9BA-8EB5-5067-093B21B0AE9A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A91454F8-D9BA-8EB5-5067-093B21B0AE9A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A91454F8-D9BA-8EB5-5067-093B21B0AE9A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C1B4CE8A-14F8-9399-D669-B09E4F5EA1BC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C1B4CE8A-14F8-9399-D669-B09E4F5EA1BC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C1B4CE8A-14F8-9399-D669-B09E4F5EA1BC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C1B4CE8A-14F8-9399-D669-B09E4F5EA1BC}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(MonoDevelopProperties) = preSolution
+		StartupItem = Assembly-CSharp.csproj
+	EndGlobalSection
+EndGlobal
