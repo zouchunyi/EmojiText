@@ -10,7 +10,6 @@ public class EmojiText : Text {
 
 	private const bool EMOJI_LARGE = true;
 	private static Dictionary<string,EmojiInfo> EmojiIndex = null;
-	private static bool EmojiIndexInited = false;
 
 	struct EmojiInfo
 	{
@@ -52,12 +51,14 @@ public class EmojiText : Text {
 		}
 
 		Dictionary<int,EmojiInfo> emojiDic = new Dictionary<int, EmojiInfo> ();
-		MatchCollection matches =Regex.Matches(text,"\\[[a-z0-9A-Z]+\\]");
-		for (int i = 0; i < matches.Count; i++) {
-			EmojiInfo info;
-			if (EmojiIndex.TryGetValue (matches [i].Value, out info)) {
-				info.len = matches [i].Length;
-				emojiDic.Add (matches [i].Index, info);
+		if (supportRichText) {
+			MatchCollection matches = Regex.Matches (text, "\\[[a-z0-9A-Z]+\\]");
+			for (int i = 0; i < matches.Count; i++) {
+				EmojiInfo info;
+				if (EmojiIndex.TryGetValue (matches [i].Value, out info)) {
+					info.len = matches [i].Length;
+					emojiDic.Add (matches [i].Index, info);
+				}
 			}
 		}
 
@@ -104,55 +105,90 @@ public class EmojiText : Text {
 		}
 		else
 		{
-		    for (int i = 0; i < vertCount; ++i)
-		    {
+			float repairDistance = 0;
+			float repairDistanceHalf = 0;
+			float repairY = 0;
+			if (vertCount > 0) {
+				repairY = verts [3].position.y;
+			}
+			for (int i = 0; i < vertCount; ++i) {
 				EmojiInfo info;
 				int index = i / 4;
 				if (emojiDic.TryGetValue (index, out info)) {
+					//compute the distance of '[' and get the distance of emoji 
+					float charDis = (verts [i + 1].position.x - verts [i].position.x) * 3;
 					m_TempVerts [3] = verts [i];//1
 					m_TempVerts [2] = verts [i + 1];//2
 					m_TempVerts [1] = verts [i + 2];//3
 					m_TempVerts [0] = verts [i + 3];//4
 
-					float fixValue = 0;
-					for (int j = 0; j < emojiDic [index].len; j++) {
-						fixValue += verts [i + 1 + 4 * j].position.x - verts [i + 4 * j].position.x;
+					//the real distance of an emoji
+					m_TempVerts [2].position += new Vector3 (charDis, 0, 0);
+					m_TempVerts [1].position += new Vector3 (charDis, 0, 0);
+
+					//make emoji has equal width and height
+					float fixValue = (m_TempVerts [2].position.x - m_TempVerts [3].position.x - (m_TempVerts [2].position.y - m_TempVerts [1].position.y));
+					m_TempVerts [2].position -= new Vector3 (fixValue, 0, 0);
+					m_TempVerts [1].position -= new Vector3 (fixValue, 0, 0);
+
+					float curRepairDis = 0;
+					if (verts [i].position.y < repairY) {// to judge current char in the same line or not
+						repairDistance = repairDistanceHalf;
+						repairDistanceHalf = 0;
+						repairY = verts [i + 3].position.y;
+					} 
+					curRepairDis = repairDistance;
+					int dot = 0;//repair next line distance
+					for (int j = info.len - 1; j > 0; j--) {
+						if (verts [i + j * 4].position.y >= verts [i + 3].position.y) {
+							repairDistance += verts [i + j * 4 + 1].position.x - m_TempVerts [2].position.x;
+							break;
+						} else {
+							dot = i + 4 * j;
+
+						}
 					}
-					fixValue /= emojiDic [index].len;
-					fixValue = fixValue * (emojiDic [index].len - 1) / 2;
+					if (dot > 0) {
+						int nextChar = i + info.len * 4;
+						if (nextChar < verts.Count) {
+							repairDistanceHalf = verts [nextChar].position.x - verts [dot].position.x;
+						}
+					}
 
-					m_TempVerts [3].position += new Vector3 (fixValue,0,0);
-					m_TempVerts [2].position += new Vector3 (fixValue,0,0);
-					m_TempVerts [1].position += new Vector3 (fixValue,0,0);
-					m_TempVerts [0].position += new Vector3 (fixValue,0,0);
-
-					fixValue = (m_TempVerts [2].position.x - m_TempVerts [3].position.x - (m_TempVerts [2].position.y - m_TempVerts [1].position.y)) / 2;
-					m_TempVerts [3].position = new Vector3 (m_TempVerts [3].position.x + fixValue, m_TempVerts [3].position.y, m_TempVerts [3].position.z);
-					m_TempVerts [2].position = new Vector3 (m_TempVerts [2].position.x - fixValue, m_TempVerts [2].position.y, m_TempVerts [2].position.z);
-					m_TempVerts [1].position = new Vector3 (m_TempVerts [1].position.x - fixValue, m_TempVerts [1].position.y, m_TempVerts [1].position.z);
-					m_TempVerts [0].position = new Vector3 (m_TempVerts [0].position.x + fixValue, m_TempVerts [0].position.y, m_TempVerts [0].position.z);
+					//repair its distance
+					for (int j = 0; j < 4; j++) {
+						m_TempVerts [j].position -= new Vector3 (curRepairDis, 0, 0);
+					}
 
 					m_TempVerts [0].position *= unitsPerPixel;
 					m_TempVerts [1].position *= unitsPerPixel;
 					m_TempVerts [2].position *= unitsPerPixel;
 					m_TempVerts [3].position *= unitsPerPixel;
 
-					m_TempVerts [0].uv1 = new Vector2(emojiDic[index].x,emojiDic[index].y);
-					m_TempVerts [1].uv1 = new Vector2(emojiDic[index].x + emojiDic[index].size,emojiDic[index].y);
-					m_TempVerts [2].uv1 = new Vector2(emojiDic[index].x + emojiDic[index].size,emojiDic[index].y + emojiDic[index].size);
-					m_TempVerts [3].uv1 = new Vector2(emojiDic[index].x,emojiDic[index].y + emojiDic[index].size);
+					float pixelOffset = emojiDic [index].size / 32 / 2;
+					m_TempVerts [0].uv1 = new Vector2 (emojiDic [index].x + pixelOffset, emojiDic [index].y + pixelOffset);
+					m_TempVerts [1].uv1 = new Vector2 (emojiDic [index].x - pixelOffset + emojiDic [index].size, emojiDic [index].y + pixelOffset);
+					m_TempVerts [2].uv1 = new Vector2 (emojiDic [index].x - pixelOffset + emojiDic [index].size, emojiDic [index].y - pixelOffset + emojiDic [index].size);
+					m_TempVerts [3].uv1 = new Vector2 (emojiDic [index].x + pixelOffset, emojiDic [index].y - pixelOffset + emojiDic [index].size);
 
 					toFill.AddUIVertexQuad (m_TempVerts);
 
 					i += 4 * info.len - 1;
 				} else {
 					int tempVertsIndex = i & 3;
+					if (tempVertsIndex == 0 && verts [i].position.y < repairY) {
+						repairY = verts [i + 3].position.y;
+						repairDistance = repairDistanceHalf;
+						repairDistanceHalf = 0;
+					}
 					m_TempVerts [tempVertsIndex] = verts [i];
+					m_TempVerts [tempVertsIndex].position -= new Vector3 (repairDistance, 0, 0);
 					m_TempVerts [tempVertsIndex].position *= unitsPerPixel;
 					if (tempVertsIndex == 3)
 						toFill.AddUIVertexQuad (m_TempVerts);
 				}
-		    }
+			}
+
 		}
 		m_DisableFontTextureRebuiltCallback = false;
 	}

@@ -111,7 +111,7 @@ Shader "UI/EmojiFont" {
 					fixed4 data = tex2D(_EmojiDataTex, uv);
 						
 					half frameCount = 1 + sign(data.r) + sign(data.g) * 2 + sign(data.b) * 4;
-					half index = floor(fmod(_Time.x * _FrameSpeed * 50, frameCount));
+					half index = abs(fmod(floor(_Time.x * _FrameSpeed * 50), frameCount));
 
 					half flag = (1 + sign(IN.texcoord1.x + index * size - 1)) / 2;
 					IN.texcoord1.x += index * size - flag;
