@@ -1,6 +1,8 @@
 # EmojiText
 Based on UGUI to support emoji system on Text component.
 
+Unity Version: 2017
+
 	How to use?
 	1)
 		Put all emojies in Asset/Framework/Resource/Emoji/Input.
