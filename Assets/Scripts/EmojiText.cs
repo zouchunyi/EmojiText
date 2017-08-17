@@ -28,17 +28,13 @@ public class EmojiText : Text {
 		if (EmojiIndex == null) {
 			EmojiIndex = new Dictionary<string, EmojiInfo>();
 
-			string path = Application.streamingAssetsPath + "/emoji.txt";
-			using (StreamReader sr = new StreamReader(path)) {
-				string line;
-				bool isTitle = true;
-				while ((line = sr.ReadLine()) != null) 
-				{
-					if (isTitle) {
-						isTitle = false;
-						continue;
-					}
-					string[] strs = line.Split ('\t');
+			//load emoji data, and you can overwrite this segment code base on your project.
+			TextAsset emojiContent = Resources.Load<TextAsset> ("emoji");
+			string[] lines = emojiContent.text.Split ('\n');
+			for(int i = 1 ; i < lines.Length; i ++)
+			{
+				if (! string.IsNullOrEmpty (lines [i])) {
+					string[] strs = lines [i].Split ('\t');
 					EmojiInfo info;
 					info.x = float.Parse (strs [3]);
 					info.y = float.Parse (strs [4]);
@@ -46,7 +42,6 @@ public class EmojiText : Text {
 					info.len = 0;
 					EmojiIndex.Add (strs [1], info);
 				}
-				sr.Close ();
 			}
 		}
 

@@ -1,9 +1,9 @@
+﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2008
-
-Project("{8E49E0F1-4BB6-5A65-8F2A-FECD87E6E436}") = "EmojiText", "Assembly-CSharp.csproj", "{A91454F8-D9BA-8EB5-5067-093B21B0AE9A}"
+# Visual Studio 2010
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EmojiText", "Assembly-CSharp.csproj", "{A91454F8-D9BA-8EB5-5067-093B21B0AE9A}"
 EndProject
-Project("{8E49E0F1-4BB6-5A65-8F2A-FECD87E6E436}") = "EmojiText", "Assembly-CSharp-Editor.csproj", "{C1B4CE8A-14F8-9399-D669-B09E4F5EA1BC}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EmojiText", "Assembly-CSharp-Editor.csproj", "{C1B4CE8A-14F8-9399-D669-B09E4F5EA1BC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -1,16 +1,23 @@
 ﻿/*
 
-	插件说明：用于将原始散图序列帧表情图片生成Atlas
+	Description:Create the Atlas of emojis and its data texture.
 
-	所有表情需要放到Asset/Framework/Resource/Emoji/Input中
-	命名格式为	表情名_序列帧.png 	其中单帧表情为	表情名.png
-
-	输出的Atlas会放到对应的Output中
-	其中包含两张图片，一张图片Atlas，一张数据Atlas。分别对应Emoji Shader中的_MainTex和_DataTex
-	输出的数据文件为emoji.txt，同时也会自动拷贝到Asset/GameData中，用于生成LuaTable
-	
+	How to use?
+	1)
+		Put all emojies in Asset/Framework/Resource/Emoji/Input.
+		Multi-frame emoji name format : Name_Index.png , Single frame emoji format: Name.png
+	2)
+		Excute EmojiText->Build Emoji from menu in Unity.
+	3)
+		It will outputs two textures and a txt in Emoji/Output.
+		Drag emoji_tex to "Emoji Texture" and emoji_data to "Emoji Data" in UGUIEmoji material.
+	4)
+		Repair the value of "Emoji count of every line" base on emoji_tex.png.
+	5)
+		It will auto copys emoji.txt to Resources, and you can overwrite relevant functions base on your project.
 	
 	Author:zouchunyi
+	E-mail:zouchunyi@kingsoft.com
 */
 
 using UnityEngine;
@@ -41,7 +48,7 @@ public class EmojiBuilder  {
 		public string y;
 		public string size;
 	}
-	private const int EmojiSize = 32;//表情尺寸
+	private const int EmojiSize = 32;//the size of emoji.
 
 	[MenuItem("EmojiText/Build Emoji")]
 	public static void BuildEmoji()
@@ -57,7 +64,7 @@ public class EmojiBuilder  {
 			keylist.Add (System.Convert.ToChar(i));//a-z
 		}
 
-		//搜集全部表情图片并确定每个表情由多少帧组成
+		//search all emojis and compute they frames.
 		Dictionary<string,int> sourceDic = new Dictionary<string,int> ();
 		string[] files = Directory.GetFiles (Application.dataPath + InputPath,"*.png");
 		for (int i = 0; i < files.Length; i++) {
@@ -74,7 +81,7 @@ public class EmojiBuilder  {
 			}
 		}
 			
-		//没有输出目录自动创建
+		//create the directory if it is not exist.
 		if (!Directory.Exists (OutputPath)) {
 			Directory.CreateDirectory (OutputPath);
 		}	
@@ -167,7 +174,10 @@ public class EmojiBuilder  {
 			sw.Close ();
 		}
 
-		File.Copy (OutputPath + "emoji.txt","Assets/StreamingAssets/emoji.txt",true);
+		File.Copy (OutputPath + "emoji.txt","Assets/Resources/emoji.txt",true);
+
+		AssetDatabase.Refresh ();
+		FormatTexture ();
 
 		EditorUtility.DisplayDialog ("Success", "Generate Emoji Successful!", "OK");
 	}
@@ -181,5 +191,21 @@ public class EmojiBuilder  {
 			}
 		}
 		return Vector2.zero;
+	}
+
+	private static void FormatTexture() {
+		TextureImporter emojiTex = AssetImporter.GetAtPath (OutputPath + "emoji_tex.png") as TextureImporter;
+		emojiTex.filterMode = FilterMode.Point;
+		emojiTex.mipmapEnabled = false;
+		emojiTex.sRGBTexture = true;
+		emojiTex.alphaSource = TextureImporterAlphaSource.FromInput;
+		emojiTex.SaveAndReimport ();
+
+		TextureImporter emojiData = AssetImporter.GetAtPath (OutputPath + "emoji_data.png") as TextureImporter;
+		emojiData.filterMode = FilterMode.Point;
+		emojiData.mipmapEnabled = false;
+		emojiData.sRGBTexture = false;
+		emojiData.alphaSource = TextureImporterAlphaSource.None;
+		emojiData.SaveAndReimport ();
 	}
 }

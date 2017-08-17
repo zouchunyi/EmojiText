@@ -1,3 +1,7 @@
+
+//	Author:zouchunyi
+//	E-mail:zouchunyi@kingsoft.com
+
 Shader "UI/EmojiFont" {
 	Properties {
 		[PerRendererData] _MainTex ("Font Texture", 2D) = "white" {}
@@ -82,7 +86,7 @@ Shader "UI/EmojiFont" {
 			v2f vert(appdata_t IN)
 			{
 				v2f OUT;
-				OUT.vertex = mul(UNITY_MATRIX_MVP, float4(IN.vertex.x, IN.vertex.y, IN.vertex.z, 1.0));
+				OUT.vertex = UnityObjectToClipPos(float4(IN.vertex.x, IN.vertex.y, IN.vertex.z, 1.0));
 
 				OUT.texcoord = IN.texcoord;
 				OUT.texcoord1 = IN.texcoord1;
@@ -106,21 +110,28 @@ Shader "UI/EmojiFont" {
 				fixed4 color;
 				if (IN.texcoord1.x >0 && IN.texcoord1.y > 0)
 				{
-					half size = (1 / _EmojiSize);
-					half2 uv = half2(floor(IN.texcoord1.x / size) * size + 0.5 * size,floor(IN.texcoord1.y / size) * size + 0.5 * size);
-					fixed4 data = tex2D(_EmojiDataTex, uv);
-						
-					half frameCount = 1 + sign(data.r) + sign(data.g) * 2 + sign(data.b) * 4;
-					half index = abs(fmod(floor(_Time.x * _FrameSpeed * 50), frameCount));
+					// it's an emoji
 
-					half factor2 = 2;
-					half flag = (1 + sign(IN.texcoord1.x + index * size - 1)) / factor2;
+					// compute the size of emoji
+					half size = (1 / _EmojiSize);
+					// compute the center uv of per pixel in the emoji
+					half2 uv = half2(floor(IN.texcoord1.x * _EmojiSize) * size + 0.5 * size,floor(IN.texcoord1.y * _EmojiSize) * size + 0.5 * size);
+					// read data
+					fixed4 data = tex2D(_EmojiDataTex, uv);
+					// compute the frame count of emoji
+					half frameCount = 1 + sign(data.r) + sign(data.g) * 2 + sign(data.b) * 4;
+					// compute current frame index of emoji
+					half index = abs(fmod(floor(_Time.x * _FrameSpeed * 50), frameCount));
+					// judge current frame is in the next line or not.
+					half flag = (1 + sign(IN.texcoord1.x + index * size - 1)) * 0.5;
+					// compute the final uv
 					IN.texcoord1.x += index * size - flag;
 					IN.texcoord1.y += size * flag;
 
 					color = tex2D(_EmojiTex, IN.texcoord1);
 				}else
 				{
+					// it's a text, and render it as normal ugui text
 					color = (tex2D(_MainTex, IN.texcoord) + _TextureSampleAdd) * IN.color;
 				}
 
