@@ -135,7 +135,7 @@ public class EmojiText : Text {
 					curRepairDis = repairDistance;
 					int dot = 0;//repair next line distance
 					for (int j = info.len - 1; j > 0; j--) {
-						if (verts [i + j * 4].position.y >= verts [i + 3].position.y) {
+						if (verts [i + j * 4 + 3].position.y >= verts [i + 3].position.y) {
 							repairDistance += verts [i + j * 4 + 1].position.x - m_TempVerts [2].position.x;
 							break;
 						} else {
