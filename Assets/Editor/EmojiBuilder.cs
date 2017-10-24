@@ -199,6 +199,7 @@ public class EmojiBuilder  {
 		emojiTex.mipmapEnabled = false;
 		emojiTex.sRGBTexture = true;
 		emojiTex.alphaSource = TextureImporterAlphaSource.FromInput;
+		emojiTex.textureCompression = TextureImporterCompression.Uncompressed;
 		emojiTex.SaveAndReimport ();
 
 		TextureImporter emojiData = AssetImporter.GetAtPath (OutputPath + "emoji_data.png") as TextureImporter;
@@ -206,6 +207,7 @@ public class EmojiBuilder  {
 		emojiData.mipmapEnabled = false;
 		emojiData.sRGBTexture = false;
 		emojiData.alphaSource = TextureImporterAlphaSource.None;
+		emojiData.textureCompression = TextureImporterCompression.Uncompressed;
 		emojiData.SaveAndReimport ();
 	}
 }
