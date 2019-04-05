@@ -19,7 +19,7 @@ public class EmojiText : Text {
 		public float x;
 		public float y;
 		public float size;
-		public int len;
+		//public int len;
 	}
 	private string _strEmojiText;
 		
@@ -42,7 +42,7 @@ public class EmojiText : Text {
 					info.x = float.Parse (strs [3]);
 					info.y = float.Parse (strs [4]);
 					info.size = float.Parse (strs [5]);
-					info.len = 0;
+					//info.len = 0;
 					EmojiIndex.Add (strs [1], info);
 				}
 			}
@@ -57,7 +57,7 @@ public class EmojiText : Text {
 			for (int i = 0; i < matches.Count; i++) {
 				EmojiInfo info;
 				if (EmojiIndex.TryGetValue (matches [i].Value, out info)) {
-					info.len = 1;//matches [i].Length;
+					//info.len = 1;//matches [i].Length;
                     emojiDic.Add(matches[i].Index - nOffset, info);
                     nOffset += matches [i].Length - 1;
 				}
@@ -108,12 +108,12 @@ public class EmojiText : Text {
 		}
 		else
 		{
-			float repairDistance = 0;
-			float repairDistanceHalf = 0;
-			float repairY = 0;
-			if (vertCount > 0) {
-				repairY = verts [3].position.y;
-			}			
+			// float repairDistance = 0;
+			// float repairDistanceHalf = 0;
+			// float repairY = 0;
+			// if (vertCount > 0) {
+			// 	repairY = verts [3].position.y;
+			// }			
 			for (int i = 0; i < vertCount; ++i) {
 				EmojiInfo info;
 				int index = i / 4;
@@ -126,14 +126,14 @@ public class EmojiText : Text {
 					m_TempVerts [0] = verts [i + 3];//4
 
 					//the real distance of an emoji
-					m_TempVerts [2].position += new Vector3 (charDis, 0, 0);
-					m_TempVerts [1].position += new Vector3 (charDis, 0, 0);
+					//m_TempVerts [2].position += new Vector3 (charDis, 0, 0);
+					//m_TempVerts [1].position += new Vector3 (charDis, 0, 0);
 
 					//make emoji has equal width and height
-					float fixValue = (m_TempVerts [2].position.x - m_TempVerts [3].position.x - (m_TempVerts [2].position.y - m_TempVerts [1].position.y));
-					m_TempVerts [2].position -= new Vector3 (fixValue, 0, 0);
-					m_TempVerts [1].position -= new Vector3 (fixValue, 0, 0);
-
+					//float fixValue = (m_TempVerts [2].position.x - m_TempVerts [3].position.x - (m_TempVerts [2].position.y - m_TempVerts [1].position.y));
+					//m_TempVerts [2].position -= new Vector3 (fixValue, 0, 0);
+					//m_TempVerts [1].position -= new Vector3 (fixValue, 0, 0);
+					/*
 					float curRepairDis = 0;
 					if (verts [i].position.y < repairY) {// to judge current char in the same line or not
 						repairDistance = repairDistanceHalf;
@@ -162,12 +162,12 @@ public class EmojiText : Text {
 					for (int j = 0; j < 4; j++) {
 						m_TempVerts [j].position -= new Vector3 (curRepairDis, 0, 0);
 					}
-
+ 					*/
 					m_TempVerts [0].position *= unitsPerPixel;
 					m_TempVerts [1].position *= unitsPerPixel;
 					m_TempVerts [2].position *= unitsPerPixel;
 					m_TempVerts [3].position *= unitsPerPixel;
-
+					
 					float pixelOffset = emojiDic [index].size / 32 / 2;
 					m_TempVerts [0].uv1 = new Vector2 (emojiDic [index].x + pixelOffset, emojiDic [index].y + pixelOffset);
 					m_TempVerts [1].uv1 = new Vector2 (emojiDic [index].x - pixelOffset + emojiDic [index].size, emojiDic [index].y + pixelOffset);
@@ -176,16 +176,16 @@ public class EmojiText : Text {
 
 					toFill.AddUIVertexQuad (m_TempVerts);
 
-					i += 4 * info.len - 1;
+					i += 3;//4 * info.len - 1;
 				} else {					
 					int tempVertsIndex = i & 3;
-					if (tempVertsIndex == 0 && verts [i].position.y < repairY) {
-						repairY = verts [i + 3].position.y;
-						repairDistance = repairDistanceHalf;
-						repairDistanceHalf = 0;
-					}
+					// if (tempVertsIndex == 0 && verts [i].position.y < repairY) {
+					// 	repairY = verts [i + 3].position.y;
+					// 	repairDistance = repairDistanceHalf;
+					// 	repairDistanceHalf = 0;
+					// }
 					m_TempVerts [tempVertsIndex] = verts [i];
-					m_TempVerts [tempVertsIndex].position -= new Vector3 (repairDistance, 0, 0);
+					//m_TempVerts [tempVertsIndex].position -= new Vector3 (repairDistance, 0, 0);
 					m_TempVerts [tempVertsIndex].position *= unitsPerPixel;
 					if (tempVertsIndex == 3)
 						toFill.AddUIVertexQuad (m_TempVerts);
