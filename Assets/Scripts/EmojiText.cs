@@ -59,7 +59,7 @@ public class EmojiText : Text {
 				if (EmojiIndex.TryGetValue (matches [i].Value, out info)) {
 					info.len = 1;//matches [i].Length;
                     emojiDic.Add(matches[i].Index - nOffset, info);
-                    nOffset += info.len - 1;
+                    nOffset += matches [i].Length - 1;
 				}
 			}
 			_strEmojiText = Regex.Replace(text, "\\[[a-z0-9A-Z]+\\]", "%");
