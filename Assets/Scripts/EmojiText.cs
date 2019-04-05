@@ -8,6 +8,9 @@ using System.Text.RegularExpressions;
 
 public class EmojiText : Text {
 
+    public override float preferredWidth => cachedTextGeneratorForLayout.GetPreferredWidth(_strEmojiText, GetGenerationSettings(rectTransform.rect.size)) / pixelsPerUnit;
+	public override float preferredHeight => cachedTextGeneratorForLayout.GetPreferredHeight(_strEmojiText, GetGenerationSettings(rectTransform.rect.size)) / pixelsPerUnit;
+		
 	private const bool EMOJI_LARGE = true;
 	private static Dictionary<string,EmojiInfo> EmojiIndex = null;
 
@@ -18,13 +21,13 @@ public class EmojiText : Text {
 		public float size;
 		public int len;
 	}
+	private string _strEmojiText;
 		
 	readonly UIVertex[] m_TempVerts = new UIVertex[4];
 	protected override void OnPopulateMesh(VertexHelper toFill)
 	{
 		if (font == null)
-		    return;
-
+		    return;		
 		if (EmojiIndex == null) {
 			EmojiIndex = new Dictionary<string, EmojiInfo>();
 
@@ -46,15 +49,20 @@ public class EmojiText : Text {
 		}
 
 		Dictionary<int,EmojiInfo> emojiDic = new Dictionary<int, EmojiInfo> ();
+		
 		if (supportRichText) {
+			//[1] [123] 替换成#的下标偏移量
+			int nOffset = 0;
 			MatchCollection matches = Regex.Matches (text, "\\[[a-z0-9A-Z]+\\]");
 			for (int i = 0; i < matches.Count; i++) {
 				EmojiInfo info;
 				if (EmojiIndex.TryGetValue (matches [i].Value, out info)) {
-					info.len = matches [i].Length;
-					emojiDic.Add (matches [i].Index, info);
+					info.len = 1;//matches [i].Length;
+                    emojiDic.Add(matches[i].Index - nOffset, info);
+                    nOffset += info.len - 1;
 				}
 			}
+			_strEmojiText = Regex.Replace(text, "\\[[a-z0-9A-Z]+\\]", "%");
 		}
 
 		// We don't care if we the font Texture changes while we are doing our Update.
@@ -65,7 +73,7 @@ public class EmojiText : Text {
 		Vector2 extents = rectTransform.rect.size;
 
 		var settings = GetGenerationSettings(extents);
-		cachedTextGenerator.Populate(text, settings);
+		cachedTextGenerator.Populate(_strEmojiText, settings);		
 
 		Rect inputRect = rectTransform.rect;
 
@@ -105,11 +113,11 @@ public class EmojiText : Text {
 			float repairY = 0;
 			if (vertCount > 0) {
 				repairY = verts [3].position.y;
-			}
+			}			
 			for (int i = 0; i < vertCount; ++i) {
 				EmojiInfo info;
 				int index = i / 4;
-				if (emojiDic.TryGetValue (index, out info)) {
+				if (emojiDic.TryGetValue (index, out info)) {					
 					//compute the distance of '[' and get the distance of emoji 
 					float charDis = (verts [i + 1].position.x - verts [i].position.x) * 3;
 					m_TempVerts [3] = verts [i];//1
@@ -169,7 +177,7 @@ public class EmojiText : Text {
 					toFill.AddUIVertexQuad (m_TempVerts);
 
 					i += 4 * info.len - 1;
-				} else {
+				} else {					
 					int tempVertsIndex = i & 3;
 					if (tempVertsIndex == 0 && verts [i].position.y < repairY) {
 						repairY = verts [i + 3].position.y;

@@ -53,16 +53,20 @@ public class EmojiBuilder  {
 	[MenuItem("EmojiText/Build Emoji")]
 	public static void BuildEmoji()
 	{
-		List<char> keylist = new List<char> ();
-		for (int i = 48; i <= 57; i++) {
-			keylist.Add (System.Convert.ToChar(i));//0-9
-		}
-		for (int i = 65; i <= 90; i++) {
-			keylist.Add (System.Convert.ToChar(i));//A-Z
-		}
-		for (int i = 97; i <= 122; i++) {
-			keylist.Add (System.Convert.ToChar(i));//a-z
-		}
+		// List<char> keylist = new List<char> ();
+		// for(int i = 0; i<100; i++)
+		// {
+		// 	keylist.Add(i.ToString());
+		// }
+		// for (int i = 48; i <= 57; i++) {
+		// 	keylist.Add (System.Convert.ToChar(i));//0-9
+		// }
+		// for (int i = 65; i <= 90; i++) {
+		// 	keylist.Add (System.Convert.ToChar(i));//A-Z
+		// }
+		// for (int i = 97; i <= 122; i++) {
+		// 	keylist.Add (System.Convert.ToChar(i));//a-z
+		// }
 
 		//search all emojis and compute they frames.
 		Dictionary<string,int> sourceDic = new Dictionary<string,int> ();
@@ -135,13 +139,14 @@ public class EmojiBuilder  {
 
 				if (! emojiDic.ContainsKey (key)) {
 					EmojiInfo info;
-					if (keyindex < keylist.Count)
-					{
-						info.key = "[" + char.ToString(keylist[keyindex]) + "]";
-					}else
-					{
-						info.key = "[" + char.ToString(keylist[keyindex / keylist.Count]) + char.ToString(keylist[keyindex % keylist.Count]) + "]";
-					}
+					// if (keyindex < keylist.Count)
+					// {
+					// 	info.key = "[" + char.ToString(keylist[keyindex]) + "]";
+					// }else
+					// {
+					// 	info.key = "[" + char.ToString(keylist[keyindex / keylist.Count]) + char.ToString(keylist[keyindex % keylist.Count]) + "]";
+					// }
+					info.key = "[" + keyindex + "]";
 					info.x = (x * 1.0f / texSize.x).ToString();
 					info.y = (y * 1.0f / texSize.y).ToString();
 					info.size = (EmojiSize * 1.0f / texSize.x).ToString ();
