@@ -8,9 +8,10 @@ using System.Text.RegularExpressions;
 
 public class EmojiText : Text {
 
-    public override float preferredWidth => cachedTextGeneratorForLayout.GetPreferredWidth(_strEmojiText, GetGenerationSettings(rectTransform.rect.size)) / pixelsPerUnit;
-	public override float preferredHeight => cachedTextGeneratorForLayout.GetPreferredHeight(_strEmojiText, GetGenerationSettings(rectTransform.rect.size)) / pixelsPerUnit;
-		
+    public override float preferredWidth => cachedTextGeneratorForLayout.GetPreferredWidth(emojiText, GetGenerationSettings(rectTransform.rect.size)) / pixelsPerUnit;
+	public override float preferredHeight => cachedTextGeneratorForLayout.GetPreferredHeight(emojiText, GetGenerationSettings(rectTransform.rect.size)) / pixelsPerUnit;
+
+    private string emojiText => Regex.Replace(text, "\\[[a-z0-9A-Z]+\\]", "%");
 	private const bool EMOJI_LARGE = true;
 	private static Dictionary<string,EmojiInfo> EmojiIndex = null;
 
@@ -24,8 +25,10 @@ public class EmojiText : Text {
 	private string _strEmojiText;
 		
 	readonly UIVertex[] m_TempVerts = new UIVertex[4];
+	
 	protected override void OnPopulateMesh(VertexHelper toFill)
 	{
+		Debug.Log($"OnPopulateMesh");
 		if (font == null)
 		    return;		
 		if (EmojiIndex == null) {
@@ -61,8 +64,7 @@ public class EmojiText : Text {
                     emojiDic.Add(matches[i].Index - nOffset, info);
                     nOffset += matches [i].Length - 1;
 				}
-			}
-			_strEmojiText = Regex.Replace(text, "\\[[a-z0-9A-Z]+\\]", "%");
+			}			
 		}
 
 		// We don't care if we the font Texture changes while we are doing our Update.
@@ -73,7 +75,7 @@ public class EmojiText : Text {
 		Vector2 extents = rectTransform.rect.size;
 
 		var settings = GetGenerationSettings(extents);
-		cachedTextGenerator.Populate(_strEmojiText, settings);		
+		cachedTextGenerator.Populate(emojiText, settings);		
 
 		Rect inputRect = rectTransform.rect;
 
