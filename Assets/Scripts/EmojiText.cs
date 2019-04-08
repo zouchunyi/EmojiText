@@ -8,10 +8,11 @@ using System.Text.RegularExpressions;
 
 public class EmojiText : Text {
 
+	private float _iconScaleOfDoubleSymbole = 0.7f;
     public override float preferredWidth => cachedTextGeneratorForLayout.GetPreferredWidth(emojiText, GetGenerationSettings(rectTransform.rect.size)) / pixelsPerUnit;
 	public override float preferredHeight => cachedTextGeneratorForLayout.GetPreferredHeight(emojiText, GetGenerationSettings(rectTransform.rect.size)) / pixelsPerUnit;
 
-    private string emojiText => Regex.Replace(text, "\\[[a-z0-9A-Z]+\\]", "%");
+    private string emojiText => Regex.Replace(text, "\\[[a-z0-9A-Z]+\\]", "%%");
 	private const bool EMOJI_LARGE = true;
 	private static Dictionary<string,EmojiInfo> EmojiIndex = null;
 
@@ -54,15 +55,17 @@ public class EmojiText : Text {
 		Dictionary<int,EmojiInfo> emojiDic = new Dictionary<int, EmojiInfo> ();
 		
 		if (supportRichText) {
-			//[1] [123] 替换成#的下标偏移量
+			int nParcedCount = 0;
+			//[1] [123] 替换成#的下标偏移量			
 			int nOffset = 0;
 			MatchCollection matches = Regex.Matches (text, "\\[[a-z0-9A-Z]+\\]");
 			for (int i = 0; i < matches.Count; i++) {
 				EmojiInfo info;
 				if (EmojiIndex.TryGetValue (matches [i].Value, out info)) {
-					//info.len = 1;//matches [i].Length;
-                    emojiDic.Add(matches[i].Index - nOffset, info);
+                    //info.len = 1;//matches [i].Length;
+                    emojiDic.Add(matches[i].Index - nOffset + nParcedCount, info);
                     nOffset += matches [i].Length - 1;
+					nParcedCount++;
 				}
 			}			
 		}
@@ -116,17 +119,30 @@ public class EmojiText : Text {
 			// if (vertCount > 0) {
 			// 	repairY = verts [3].position.y;
 			// }			
+			//_iconScaleOfDoubleSymbole = 0.85f;
 			for (int i = 0; i < vertCount; ++i) {
 				EmojiInfo info;
 				int index = i / 4;
-				if (emojiDic.TryGetValue (index, out info)) {					
-					//compute the distance of '[' and get the distance of emoji 
-					float charDis = (verts [i + 1].position.x - verts [i].position.x) * 3;
-					m_TempVerts [3] = verts [i];//1
+				if (emojiDic.TryGetValue (index, out info)) {
+                    //compute the distance of '[' and get the distance of emoji 
+                    //计算2个%%的距离
+                    float emojiSize = 2 * (verts[i + 1].position.x - verts[i].position.x) * _iconScaleOfDoubleSymbole;
+
+                    float fCharHeight = verts[i + 1].position.y - verts[i + 2].position.y;
+                    float fCharWidth = verts[i + 1].position.x - verts[i].position.x;
+
+                    float fHeightOffsetHalf = (emojiSize - fCharHeight) * 0.5f;
+                    float fStartOffset = emojiSize * (1 - _iconScaleOfDoubleSymbole);
+
+                    m_TempVerts [3] = verts [i];//1
 					m_TempVerts [2] = verts [i + 1];//2
 					m_TempVerts [1] = verts [i + 2];//3
 					m_TempVerts [0] = verts [i + 3];//4
 
+                    m_TempVerts[0].position += new Vector3(fStartOffset, -fHeightOffsetHalf, 0);
+                    m_TempVerts[1].position += new Vector3(fStartOffset - fCharWidth + emojiSize, -fHeightOffsetHalf, 0);
+                    m_TempVerts[2].position += new Vector3(fStartOffset - fCharWidth + emojiSize, fHeightOffsetHalf, 0);
+					m_TempVerts [3].position += new Vector3(fStartOffset, fHeightOffsetHalf, 0);
 					//the real distance of an emoji
 					//m_TempVerts [2].position += new Vector3 (charDis, 0, 0);
 					//m_TempVerts [1].position += new Vector3 (charDis, 0, 0);
@@ -178,8 +194,8 @@ public class EmojiText : Text {
 
 					toFill.AddUIVertexQuad (m_TempVerts);
 
-					i += 3;//4 * info.len - 1;
-				} else {					
+                    i += 4 * 2 - 1;//3;//4 * info.len - 1;
+                } else {					
 					int tempVertsIndex = i & 3;
 					// if (tempVertsIndex == 0 && verts [i].position.y < repairY) {
 					// 	repairY = verts [i + 3].position.y;
