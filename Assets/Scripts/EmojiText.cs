@@ -1,13 +1,10 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
-using System.Collections;
 using System.Collections.Generic;
-using System.IO;
 using System.Text.RegularExpressions;
 
-
-public class EmojiText : Text {
-
+public class EmojiText : Text 
+{
 	private float _iconScaleOfDoubleSymbole = 0.7f;
     public override float preferredWidth => cachedTextGeneratorForLayout.GetPreferredWidth(emojiText, GetGenerationSettings(rectTransform.rect.size)) / pixelsPerUnit;
 	public override float preferredHeight => cachedTextGeneratorForLayout.GetPreferredHeight(emojiText, GetGenerationSettings(rectTransform.rect.size)) / pixelsPerUnit;
@@ -21,7 +18,6 @@ public class EmojiText : Text {
 		public float x;
 		public float y;
 		public float size;
-		//public int len;
 	}
 	private string _strEmojiText;
 		
@@ -46,7 +42,6 @@ public class EmojiText : Text {
 					info.x = float.Parse (strs [3]);
 					info.y = float.Parse (strs [4]);
 					info.size = float.Parse (strs [5]);
-					//info.len = 0;
 					EmojiIndex.Add (strs [1], info);
 				}
 			}
@@ -62,7 +57,6 @@ public class EmojiText : Text {
 			for (int i = 0; i < matches.Count; i++) {
 				EmojiInfo info;
 				if (EmojiIndex.TryGetValue (matches [i].Value, out info)) {
-                    //info.len = 1;//matches [i].Length;
                     emojiDic.Add(matches[i].Index - nOffset + nParcedCount, info);
                     nOffset += matches [i].Length - 1;
 					nParcedCount++;
@@ -113,13 +107,6 @@ public class EmojiText : Text {
 		}
 		else
 		{
-			// float repairDistance = 0;
-			// float repairDistanceHalf = 0;
-			// float repairY = 0;
-			// if (vertCount > 0) {
-			// 	repairY = verts [3].position.y;
-			// }			
-			//_iconScaleOfDoubleSymbole = 0.85f;
 			for (int i = 0; i < vertCount; ++i) {
 				EmojiInfo info;
 				int index = i / 4;
@@ -143,44 +130,7 @@ public class EmojiText : Text {
                     m_TempVerts[1].position += new Vector3(fStartOffset - fCharWidth + emojiSize, -fHeightOffsetHalf, 0);
                     m_TempVerts[2].position += new Vector3(fStartOffset - fCharWidth + emojiSize, fHeightOffsetHalf, 0);
 					m_TempVerts [3].position += new Vector3(fStartOffset, fHeightOffsetHalf, 0);
-					//the real distance of an emoji
-					//m_TempVerts [2].position += new Vector3 (charDis, 0, 0);
-					//m_TempVerts [1].position += new Vector3 (charDis, 0, 0);
-
-					//make emoji has equal width and height
-					//float fixValue = (m_TempVerts [2].position.x - m_TempVerts [3].position.x - (m_TempVerts [2].position.y - m_TempVerts [1].position.y));
-					//m_TempVerts [2].position -= new Vector3 (fixValue, 0, 0);
-					//m_TempVerts [1].position -= new Vector3 (fixValue, 0, 0);
-					/*
-					float curRepairDis = 0;
-					if (verts [i].position.y < repairY) {// to judge current char in the same line or not
-						repairDistance = repairDistanceHalf;
-						repairDistanceHalf = 0;
-						repairY = verts [i + 3].position.y;
-					} 
-					curRepairDis = repairDistance;
-					int dot = 0;//repair next line distance
-					for (int j = info.len - 1; j > 0; j--) {
-						if (verts [i + j * 4 + 3].position.y >= verts [i + 3].position.y) {
-							repairDistance += verts [i + j * 4 + 1].position.x - m_TempVerts [2].position.x;
-							break;
-						} else {
-							dot = i + 4 * j;
-
-						}
-					}
-					if (dot > 0) {
-						int nextChar = i + info.len * 4;
-						if (nextChar < verts.Count) {
-							repairDistanceHalf = verts [nextChar].position.x - verts [dot].position.x;
-						}
-					}
-
-					//repair its distance
-					for (int j = 0; j < 4; j++) {
-						m_TempVerts [j].position -= new Vector3 (curRepairDis, 0, 0);
-					}
- 					*/
+					
 					m_TempVerts [0].position *= unitsPerPixel;
 					m_TempVerts [1].position *= unitsPerPixel;
 					m_TempVerts [2].position *= unitsPerPixel;
@@ -197,13 +147,7 @@ public class EmojiText : Text {
                     i += 4 * 2 - 1;//3;//4 * info.len - 1;
                 } else {					
 					int tempVertsIndex = i & 3;
-					// if (tempVertsIndex == 0 && verts [i].position.y < repairY) {
-					// 	repairY = verts [i + 3].position.y;
-					// 	repairDistance = repairDistanceHalf;
-					// 	repairDistanceHalf = 0;
-					// }
 					m_TempVerts [tempVertsIndex] = verts [i];
-					//m_TempVerts [tempVertsIndex].position -= new Vector3 (repairDistance, 0, 0);
 					m_TempVerts [tempVertsIndex].position *= unitsPerPixel;
 					if (tempVertsIndex == 3)
 						toFill.AddUIVertexQuad (m_TempVerts);
