@@ -8,6 +8,11 @@ using System.Text.RegularExpressions;
 
 public class EmojiText : Text {
 
+	private float _iconScaleOfDoubleSymbole = 0.7f;
+    public override float preferredWidth => cachedTextGeneratorForLayout.GetPreferredWidth(emojiText, GetGenerationSettings(rectTransform.rect.size)) / pixelsPerUnit;
+	public override float preferredHeight => cachedTextGeneratorForLayout.GetPreferredHeight(emojiText, GetGenerationSettings(rectTransform.rect.size)) / pixelsPerUnit;
+
+    private string emojiText => Regex.Replace(text, "\\[[a-z0-9A-Z]+\\]", "%%");
 	private const bool EMOJI_LARGE = true;
 	private static Dictionary<string,EmojiInfo> EmojiIndex = null;
 
@@ -16,15 +21,17 @@ public class EmojiText : Text {
 		public float x;
 		public float y;
 		public float size;
-		public int len;
+		//public int len;
 	}
+	private string _strEmojiText;
 		
 	readonly UIVertex[] m_TempVerts = new UIVertex[4];
+	
 	protected override void OnPopulateMesh(VertexHelper toFill)
 	{
+		Debug.Log($"OnPopulateMesh");
 		if (font == null)
-		    return;
-
+		    return;		
 		if (EmojiIndex == null) {
 			EmojiIndex = new Dictionary<string, EmojiInfo>();
 
@@ -39,22 +46,28 @@ public class EmojiText : Text {
 					info.x = float.Parse (strs [3]);
 					info.y = float.Parse (strs [4]);
 					info.size = float.Parse (strs [5]);
-					info.len = 0;
+					//info.len = 0;
 					EmojiIndex.Add (strs [1], info);
 				}
 			}
 		}
 
 		Dictionary<int,EmojiInfo> emojiDic = new Dictionary<int, EmojiInfo> ();
+		
 		if (supportRichText) {
+			int nParcedCount = 0;
+			//[1] [123] 替换成#的下标偏移量			
+			int nOffset = 0;
 			MatchCollection matches = Regex.Matches (text, "\\[[a-z0-9A-Z]+\\]");
 			for (int i = 0; i < matches.Count; i++) {
 				EmojiInfo info;
 				if (EmojiIndex.TryGetValue (matches [i].Value, out info)) {
-					info.len = matches [i].Length;
-					emojiDic.Add (matches [i].Index, info);
+                    //info.len = 1;//matches [i].Length;
+                    emojiDic.Add(matches[i].Index - nOffset + nParcedCount, info);
+                    nOffset += matches [i].Length - 1;
+					nParcedCount++;
 				}
-			}
+			}			
 		}
 
 		// We don't care if we the font Texture changes while we are doing our Update.
@@ -65,7 +78,7 @@ public class EmojiText : Text {
 		Vector2 extents = rectTransform.rect.size;
 
 		var settings = GetGenerationSettings(extents);
-		cachedTextGenerator.Populate(text, settings);
+		cachedTextGenerator.Populate(emojiText, settings);		
 
 		Rect inputRect = rectTransform.rect;
 
@@ -100,32 +113,45 @@ public class EmojiText : Text {
 		}
 		else
 		{
-			float repairDistance = 0;
-			float repairDistanceHalf = 0;
-			float repairY = 0;
-			if (vertCount > 0) {
-				repairY = verts [3].position.y;
-			}
+			// float repairDistance = 0;
+			// float repairDistanceHalf = 0;
+			// float repairY = 0;
+			// if (vertCount > 0) {
+			// 	repairY = verts [3].position.y;
+			// }			
+			//_iconScaleOfDoubleSymbole = 0.85f;
 			for (int i = 0; i < vertCount; ++i) {
 				EmojiInfo info;
 				int index = i / 4;
 				if (emojiDic.TryGetValue (index, out info)) {
-					//compute the distance of '[' and get the distance of emoji 
-					float charDis = (verts [i + 1].position.x - verts [i].position.x) * 3;
-					m_TempVerts [3] = verts [i];//1
+                    //compute the distance of '[' and get the distance of emoji 
+                    //计算2个%%的距离
+                    float emojiSize = 2 * (verts[i + 1].position.x - verts[i].position.x) * _iconScaleOfDoubleSymbole;
+
+                    float fCharHeight = verts[i + 1].position.y - verts[i + 2].position.y;
+                    float fCharWidth = verts[i + 1].position.x - verts[i].position.x;
+
+                    float fHeightOffsetHalf = (emojiSize - fCharHeight) * 0.5f;
+                    float fStartOffset = emojiSize * (1 - _iconScaleOfDoubleSymbole);
+
+                    m_TempVerts [3] = verts [i];//1
 					m_TempVerts [2] = verts [i + 1];//2
 					m_TempVerts [1] = verts [i + 2];//3
 					m_TempVerts [0] = verts [i + 3];//4
 
+                    m_TempVerts[0].position += new Vector3(fStartOffset, -fHeightOffsetHalf, 0);
+                    m_TempVerts[1].position += new Vector3(fStartOffset - fCharWidth + emojiSize, -fHeightOffsetHalf, 0);
+                    m_TempVerts[2].position += new Vector3(fStartOffset - fCharWidth + emojiSize, fHeightOffsetHalf, 0);
+					m_TempVerts [3].position += new Vector3(fStartOffset, fHeightOffsetHalf, 0);
 					//the real distance of an emoji
-					m_TempVerts [2].position += new Vector3 (charDis, 0, 0);
-					m_TempVerts [1].position += new Vector3 (charDis, 0, 0);
+					//m_TempVerts [2].position += new Vector3 (charDis, 0, 0);
+					//m_TempVerts [1].position += new Vector3 (charDis, 0, 0);
 
 					//make emoji has equal width and height
-					float fixValue = (m_TempVerts [2].position.x - m_TempVerts [3].position.x - (m_TempVerts [2].position.y - m_TempVerts [1].position.y));
-					m_TempVerts [2].position -= new Vector3 (fixValue, 0, 0);
-					m_TempVerts [1].position -= new Vector3 (fixValue, 0, 0);
-
+					//float fixValue = (m_TempVerts [2].position.x - m_TempVerts [3].position.x - (m_TempVerts [2].position.y - m_TempVerts [1].position.y));
+					//m_TempVerts [2].position -= new Vector3 (fixValue, 0, 0);
+					//m_TempVerts [1].position -= new Vector3 (fixValue, 0, 0);
+					/*
 					float curRepairDis = 0;
 					if (verts [i].position.y < repairY) {// to judge current char in the same line or not
 						repairDistance = repairDistanceHalf;
@@ -154,12 +180,12 @@ public class EmojiText : Text {
 					for (int j = 0; j < 4; j++) {
 						m_TempVerts [j].position -= new Vector3 (curRepairDis, 0, 0);
 					}
-
+ 					*/
 					m_TempVerts [0].position *= unitsPerPixel;
 					m_TempVerts [1].position *= unitsPerPixel;
 					m_TempVerts [2].position *= unitsPerPixel;
 					m_TempVerts [3].position *= unitsPerPixel;
-
+					
 					float pixelOffset = emojiDic [index].size / 32 / 2;
 					m_TempVerts [0].uv1 = new Vector2 (emojiDic [index].x + pixelOffset, emojiDic [index].y + pixelOffset);
 					m_TempVerts [1].uv1 = new Vector2 (emojiDic [index].x - pixelOffset + emojiDic [index].size, emojiDic [index].y + pixelOffset);
@@ -168,16 +194,16 @@ public class EmojiText : Text {
 
 					toFill.AddUIVertexQuad (m_TempVerts);
 
-					i += 4 * info.len - 1;
-				} else {
+                    i += 4 * 2 - 1;//3;//4 * info.len - 1;
+                } else {					
 					int tempVertsIndex = i & 3;
-					if (tempVertsIndex == 0 && verts [i].position.y < repairY) {
-						repairY = verts [i + 3].position.y;
-						repairDistance = repairDistanceHalf;
-						repairDistanceHalf = 0;
-					}
+					// if (tempVertsIndex == 0 && verts [i].position.y < repairY) {
+					// 	repairY = verts [i + 3].position.y;
+					// 	repairDistance = repairDistanceHalf;
+					// 	repairDistanceHalf = 0;
+					// }
 					m_TempVerts [tempVertsIndex] = verts [i];
-					m_TempVerts [tempVertsIndex].position -= new Vector3 (repairDistance, 0, 0);
+					//m_TempVerts [tempVertsIndex].position -= new Vector3 (repairDistance, 0, 0);
 					m_TempVerts [tempVertsIndex].position *= unitsPerPixel;
 					if (tempVertsIndex == 3)
 						toFill.AddUIVertexQuad (m_TempVerts);
