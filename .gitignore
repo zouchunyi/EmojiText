@@ -3,3 +3,7 @@
 *.userprefs
 Library
 Temp
+*.sln
+.vs
+obj
+Logs
