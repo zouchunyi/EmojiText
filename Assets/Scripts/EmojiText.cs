@@ -5,13 +5,12 @@ using System.Text.RegularExpressions;
 
 public class EmojiText : Text 
 {
-	private float _iconScaleOfDoubleSymbole = 0.7f;
+	private const float ICON_SCALE_OF_DOUBLE_SYMBOLE = 0.7f;
     public override float preferredWidth => cachedTextGeneratorForLayout.GetPreferredWidth(emojiText, GetGenerationSettings(rectTransform.rect.size)) / pixelsPerUnit;
 	public override float preferredHeight => cachedTextGeneratorForLayout.GetPreferredHeight(emojiText, GetGenerationSettings(rectTransform.rect.size)) / pixelsPerUnit;
 
     private string emojiText => Regex.Replace(text, "\\[[a-z0-9A-Z]+\\]", "%%");
-	private const bool EMOJI_LARGE = true;
-	private static Dictionary<string,EmojiInfo> EmojiIndex = null;
+	private static Dictionary<string,EmojiInfo> m_EmojiIndexDict = null;
 
 	struct EmojiInfo
 	{
@@ -19,17 +18,18 @@ public class EmojiText : Text
 		public float y;
 		public float size;
 	}
-	private string _strEmojiText;
 		
 	readonly UIVertex[] m_TempVerts = new UIVertex[4];
 	
 	protected override void OnPopulateMesh(VertexHelper toFill)
 	{
-		Debug.Log($"OnPopulateMesh");
 		if (font == null)
-		    return;		
-		if (EmojiIndex == null) {
-			EmojiIndex = new Dictionary<string, EmojiInfo>();
+        {
+            return;
+        }
+        if (m_EmojiIndexDict == null)
+        {
+            m_EmojiIndexDict = new Dictionary<string, EmojiInfo>();
 
 			//load emoji data, and you can overwrite this segment code base on your project.
 			TextAsset emojiContent = Resources.Load<TextAsset> ("emoji");
@@ -42,21 +42,24 @@ public class EmojiText : Text
 					info.x = float.Parse (strs [3]);
 					info.y = float.Parse (strs [4]);
 					info.size = float.Parse (strs [5]);
-					EmojiIndex.Add (strs [1], info);
+                    m_EmojiIndexDict.Add (strs [1], info);
 				}
 			}
 		}
 
 		Dictionary<int,EmojiInfo> emojiDic = new Dictionary<int, EmojiInfo> ();
 		
-		if (supportRichText) {
+		if (supportRichText)
+        {
 			int nParcedCount = 0;
 			//[1] [123] 替换成#的下标偏移量			
 			int nOffset = 0;
 			MatchCollection matches = Regex.Matches (text, "\\[[a-z0-9A-Z]+\\]");
-			for (int i = 0; i < matches.Count; i++) {
+			for (int i = 0; i < matches.Count; i++)
+            {
 				EmojiInfo info;
-				if (EmojiIndex.TryGetValue (matches [i].Value, out info)) {
+				if (m_EmojiIndexDict.TryGetValue (matches[i].Value, out info))
+                {
                     emojiDic.Add(matches[i].Index - nOffset + nParcedCount, info);
                     nOffset += matches [i].Length - 1;
 					nParcedCount++;
@@ -82,16 +85,21 @@ public class EmojiText : Text
 		refPoint.x = Mathf.Lerp(inputRect.xMin, inputRect.xMax, textAnchorPivot.x);
 		refPoint.y = Mathf.Lerp(inputRect.yMin, inputRect.yMax, textAnchorPivot.y);
 
-		// Determine fraction of pixel to offset text mesh.
-		Vector2 roundingOffset = PixelAdjustPoint(refPoint) - refPoint;
-
-		// Apply the offset to the vertices
-		IList<UIVertex> verts = cachedTextGenerator.verts;
+        // Apply the offset to the vertices
+        IList<UIVertex> verts = cachedTextGenerator.verts;
 		float unitsPerPixel = 1 / pixelsPerUnit;
-		//Last 4 verts are always a new line...
-		int vertCount = verts.Count - 4;
+		int vertCount = verts.Count;
 
-		toFill.Clear();
+        // We have no verts to process just return (case 1037923)
+        if (vertCount <= 0)
+        {
+            toFill.Clear();
+            return;
+        }
+
+        Vector2 roundingOffset = new Vector2(verts[0].position.x, verts[0].position.y) * unitsPerPixel;
+        roundingOffset = PixelAdjustPoint(roundingOffset) - roundingOffset;
+        toFill.Clear();
 		if (roundingOffset != Vector2.zero)
 		{
 		    for (int i = 0; i < vertCount; ++i)
@@ -102,24 +110,28 @@ public class EmojiText : Text
 		        m_TempVerts[tempVertsIndex].position.x += roundingOffset.x;
 		        m_TempVerts[tempVertsIndex].position.y += roundingOffset.y;
 		        if (tempVertsIndex == 3)
-		            toFill.AddUIVertexQuad(m_TempVerts);
-		    }
+                {
+                    toFill.AddUIVertexQuad(m_TempVerts);
+                }
+            }
 		}
 		else
 		{
-			for (int i = 0; i < vertCount; ++i) {
+			for (int i = 0; i < vertCount; ++i)
+            {
 				EmojiInfo info;
 				int index = i / 4;
-				if (emojiDic.TryGetValue (index, out info)) {
+				if (emojiDic.TryGetValue (index, out info))
+                {
                     //compute the distance of '[' and get the distance of emoji 
                     //计算2个%%的距离
-                    float emojiSize = 2 * (verts[i + 1].position.x - verts[i].position.x) * _iconScaleOfDoubleSymbole;
+                    float emojiSize = 2 * (verts[i + 1].position.x - verts[i].position.x) * ICON_SCALE_OF_DOUBLE_SYMBOLE;
 
                     float fCharHeight = verts[i + 1].position.y - verts[i + 2].position.y;
                     float fCharWidth = verts[i + 1].position.x - verts[i].position.x;
 
                     float fHeightOffsetHalf = (emojiSize - fCharHeight) * 0.5f;
-                    float fStartOffset = emojiSize * (1 - _iconScaleOfDoubleSymbole);
+                    float fStartOffset = emojiSize * (1 - ICON_SCALE_OF_DOUBLE_SYMBOLE);
 
                     m_TempVerts [3] = verts [i];//1
 					m_TempVerts [2] = verts [i + 1];//2
@@ -144,14 +156,18 @@ public class EmojiText : Text
 
 					toFill.AddUIVertexQuad (m_TempVerts);
 
-                    i += 4 * 2 - 1;//3;//4 * info.len - 1;
-                } else {					
+                    i += 4 * 2 - 1;
+                }
+                else
+                {					
 					int tempVertsIndex = i & 3;
 					m_TempVerts [tempVertsIndex] = verts [i];
 					m_TempVerts [tempVertsIndex].position *= unitsPerPixel;
 					if (tempVertsIndex == 3)
-						toFill.AddUIVertexQuad (m_TempVerts);
-				}
+                    {
+                        toFill.AddUIVertexQuad(m_TempVerts);
+                    }
+                }
 			}
 
 		}
