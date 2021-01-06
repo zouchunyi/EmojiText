@@ -97,6 +97,33 @@ public class EmojiText : Text
             return;
         }
 
+		// Textは自動改行が入ると、改行コードの位置にもvertsの中に頂点情報が追加されるが、
+		// 自動改行が入らないと、改行コードのための頂点情報は無いので、Indexを調整する
+		if (emojiDic.Count > 0)
+		{
+			MatchCollection newLines = Regex.Matches(emojiText, "\\n");
+			// TextのRect範囲外は行(lineCount)にならないので、全文字が表示されている（characterCount）かも確認する。
+			if (cachedTextGenerator.lineCount == newLines.Count + 1 && emojiText.Length < cachedTextGenerator.characterCount)
+			{
+				// 絵文字があり、自動改行が入っていないので、indexを改行コードの数だけ調整する
+				Dictionary<int, EmojiInfo> emojiDicReplace = new Dictionary<int, EmojiInfo>();
+				foreach (var ed in emojiDic)
+				{
+					int index = ed.Key;
+					int offset = 0;
+					foreach (Match nl in newLines)
+					{
+						if (nl.Index < index)
+						{
+							offset -= 1;
+						}
+					}
+					emojiDicReplace.Add(index + offset, ed.Value);
+				}
+				emojiDic = emojiDicReplace;
+			}
+		}
+
         Vector2 roundingOffset = new Vector2(verts[0].position.x, verts[0].position.y) * unitsPerPixel;
         roundingOffset = PixelAdjustPoint(roundingOffset) - roundingOffset;
         toFill.Clear();
